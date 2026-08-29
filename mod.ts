@@ -1,6 +1,6 @@
 import type { SiteConfig, StenoPlugin } from "@steno/steno";
-import { marked } from "marked";
 import type { Token, Tokens, TokensList } from "marked";
+import { marked } from "marked";
 
 /** Options accepted by this plugin. */
 export interface PluginMarkdownExtensionsOptions {
@@ -55,17 +55,16 @@ const DEFAULT_OPTIONS: Required<
  *
  * @throws {Error} if any option has an invalid shape or value.
  */
-export function validateOptions(
-  options: PluginMarkdownExtensionsOptions,
-): void {
+export function validateOptions(options: PluginMarkdownExtensionsOptions): void {
   if (
-    options.footnotes !== undefined && options.footnotes !== "bottom" &&
+    options.footnotes !== undefined &&
+    options.footnotes !== "bottom" &&
     options.footnotes !== "inline"
   ) {
     throw new Error(
-      `markdown-extensions: "footnotes" must be "bottom" or "inline", got ${
-        JSON.stringify(options.footnotes)
-      }.`,
+      `markdown-extensions: "footnotes" must be "bottom" or "inline", got ${JSON.stringify(
+        options.footnotes,
+      )}.`,
     );
   }
   if (
@@ -74,8 +73,7 @@ export function validateOptions(
     typeof options.externalLinkClass !== "string"
   ) {
     throw new Error(
-      `markdown-extensions: "externalLinkClass" must be a string or false, got ${typeof options
-        .externalLinkClass}.`,
+      `markdown-extensions: "externalLinkClass" must be a string or false, got ${typeof options.externalLinkClass}.`,
     );
   }
   if (options.externalLinkClass === "") {
@@ -88,9 +86,9 @@ export function validateOptions(
       new URL(options.baseUrl);
     } catch {
       throw new Error(
-        `markdown-extensions: "baseUrl" must be a valid absolute URL, got ${
-          JSON.stringify(options.baseUrl)
-        }.`,
+        `markdown-extensions: "baseUrl" must be a valid absolute URL, got ${JSON.stringify(
+          options.baseUrl,
+        )}.`,
       );
     }
   }
@@ -242,17 +240,15 @@ export function renderGithubAlertHtml(
   bodyMarkdown: string,
   smartPunctuation: boolean,
 ): string {
-  const source = smartPunctuation
-    ? applySmartPunctuation(bodyMarkdown)
-    : bodyMarkdown;
+  const source = smartPunctuation ? applySmartPunctuation(bodyMarkdown) : bodyMarkdown;
   const trimmed = source.trim();
-  const bodyHtml = trimmed.length > 0
-    ? marked.parser(marked.lexer(trimmed))
-    : "";
-  return `<div class="markdown-alert markdown-alert-${type}">\n` +
+  const bodyHtml = trimmed.length > 0 ? marked.parser(marked.lexer(trimmed)) : "";
+  return (
+    `<div class="markdown-alert markdown-alert-${type}">\n` +
     `<p class="markdown-alert-title">${ALERT_LABELS[type]}</p>\n` +
     bodyHtml +
-    `</div>\n`;
+    `</div>\n`
+  );
 }
 
 /**
@@ -262,10 +258,7 @@ export function renderGithubAlertHtml(
  * and still recursed into (an alert can appear inside a list item or a
  * regular blockquote).
  */
-export function transformGithubAlerts(
-  tokens: Token[],
-  smartPunctuation: boolean,
-): Token[] {
+export function transformGithubAlerts(tokens: Token[], smartPunctuation: boolean): Token[] {
   for (const token of tokens) {
     if (token.type === "blockquote") {
       const detected = detectGithubAlert(token as Tokens.Blockquote);
@@ -274,11 +267,7 @@ export function transformGithubAlerts(
         html.type = "html";
         html.block = true;
         html.pre = false;
-        html.text = renderGithubAlertHtml(
-          detected.type,
-          detected.bodyMarkdown,
-          smartPunctuation,
-        );
+        html.text = renderGithubAlertHtml(detected.type, detected.bodyMarkdown, smartPunctuation);
         html.raw = html.text;
         continue;
       }
@@ -333,10 +322,7 @@ export function parseFootnoteDefinition(
  *   unmatched `[^id]` text is left exactly as `marked` would already render
  *   it (literal text).
  */
-export function transformFootnotesToBottom(
-  tokens: Token[],
-  smartPunctuation: boolean,
-): Token[] {
+export function transformFootnotesToBottom(tokens: Token[], smartPunctuation: boolean): Token[] {
   // Pass 1: collect top-level definitions.
   const definitions = new Map<string, string>();
   const definitionTokens = new Set<Token>();
@@ -374,20 +360,16 @@ export function transformFootnotesToBottom(
         for (const piece of pieces) {
           if (typeof piece === "string") {
             if (piece.length > 0) {
-              result.push(
-                { type: "text", raw: piece, text: piece } as Tokens.Text,
-              );
+              result.push({ type: "text", raw: piece, text: piece } as Tokens.Text);
             }
           } else {
             if (!definitions.has(piece.id)) {
               // No matching definition — leave the bracket text literal.
-              result.push(
-                {
-                  type: "text",
-                  raw: piece.raw,
-                  text: piece.raw,
-                } as Tokens.Text,
-              );
+              result.push({
+                type: "text",
+                raw: piece.raw,
+                text: piece.raw,
+              } as Tokens.Text);
               continue;
             }
             if (!seen.has(piece.id)) {
@@ -396,17 +378,14 @@ export function transformFootnotesToBottom(
             }
             const number = usedOrder.indexOf(piece.id) + 1;
             const slug = footnoteSlug(piece.id);
-            const refHtml =
-              `<sup id="fnref-${slug}"><a href="#fn-${slug}" class="footnote-ref">[${number}]</a></sup>`;
-            result.push(
-              {
-                type: "html",
-                raw: refHtml,
-                text: refHtml,
-                block: false,
-                pre: false,
-              } as unknown as Tokens.HTML,
-            );
+            const refHtml = `<sup id="fnref-${slug}"><a href="#fn-${slug}" class="footnote-ref">[${number}]</a></sup>`;
+            result.push({
+              type: "html",
+              raw: refHtml,
+              text: refHtml,
+              block: false,
+              pre: false,
+            } as unknown as Tokens.HTML);
           }
         }
         continue;
@@ -439,18 +418,14 @@ export function transformFootnotesToBottom(
     const bodyHtml = marked.parser(marked.lexer(source)).trim();
     return `<li id="fn-${slug}">${bodyHtml} <a href="#fnref-${slug}" class="footnote-backref">↩</a></li>`;
   });
-  const sectionHtml = `<section class="footnotes">\n<ol>\n${
-    items.join("\n")
-  }\n</ol>\n</section>\n`;
-  withoutDefinitions.push(
-    {
-      type: "html",
-      raw: sectionHtml,
-      text: sectionHtml,
-      block: true,
-      pre: false,
-    } as unknown as Tokens.HTML,
-  );
+  const sectionHtml = `<section class="footnotes">\n<ol>\n${items.join("\n")}\n</ol>\n</section>\n`;
+  withoutDefinitions.push({
+    type: "html",
+    raw: sectionHtml,
+    text: sectionHtml,
+    block: true,
+    pre: false,
+  } as unknown as Tokens.HTML);
 
   return withoutDefinitions;
 }
@@ -492,9 +467,7 @@ const CLASS_RE = /\bclass\s*=\s*"([^"]*)"/i;
  */
 export function isExternalHref(href: string, baseUrl?: string): boolean {
   const trimmed = href.trim();
-  if (
-    trimmed === "" || trimmed.startsWith("#") || /^(mailto|tel):/i.test(trimmed)
-  ) {
+  if (trimmed === "" || trimmed.startsWith("#") || /^(mailto|tel):/i.test(trimmed)) {
     return false;
   }
 
@@ -522,8 +495,10 @@ export function addClassToAnchorTag(tag: string, className: string): string {
   const existing = classMatch[1].split(/\s+/).filter(Boolean);
   if (existing.includes(className)) return tag;
   const merged = [...existing, className].join(" ");
-  return tag.slice(0, classMatch.index) +
-    tag.slice(classMatch.index).replace(CLASS_RE, `class="${merged}"`);
+  return (
+    tag.slice(0, classMatch.index) +
+    tag.slice(classMatch.index).replace(CLASS_RE, `class="${merged}"`)
+  );
 }
 
 /**
@@ -531,11 +506,7 @@ export function addClassToAnchorTag(tag: string, className: string): string {
  * external, per {@link isExternalHref}. Anchors with no `href` (bare id
  * targets) are left untouched.
  */
-export function applyExternalLinkClass(
-  html: string,
-  className: string,
-  baseUrl?: string,
-): string {
+export function applyExternalLinkClass(html: string, className: string, baseUrl?: string): string {
   return html.replace(ANCHOR_TAG_RE, (tag) => {
     const hrefMatch = HREF_RE.exec(tag);
     if (!hrefMatch) return tag;
@@ -569,12 +540,10 @@ export function applyExternalLinkClass(
 export default function pluginMarkdownExtensions(
   options: PluginMarkdownExtensionsOptions = {},
 ): StenoPlugin {
-  const smartPunctuation = options.smartPunctuation ??
-    DEFAULT_OPTIONS.smartPunctuation;
+  const smartPunctuation = options.smartPunctuation ?? DEFAULT_OPTIONS.smartPunctuation;
   const footnotes = options.footnotes ?? DEFAULT_OPTIONS.footnotes;
   const githubAlerts = options.githubAlerts ?? DEFAULT_OPTIONS.githubAlerts;
-  const externalLinkClass = options.externalLinkClass ??
-    DEFAULT_OPTIONS.externalLinkClass;
+  const externalLinkClass = options.externalLinkClass ?? DEFAULT_OPTIONS.externalLinkClass;
   const baseUrl = options.baseUrl;
 
   return {
